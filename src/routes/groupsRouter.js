@@ -14,6 +14,30 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+router.post('/', async (req, res, next) => {
+  try {
+    console.log(req.body);
+    const token = req.headers.authtoken;
+    const { name } = req.body;
+
+    if (!token) {
+      return res.status(401).json({ message: 'Not Authorized' });
+    }
+
+    const { user_id } = await firebase.auth().verifyIdToken(token);
+
+    if (!user_id) {
+      return res.status(401).json({ message: 'Not Authorized' });
+    }
+
+    const newGroupId = await Group.createGroup(name, user_id);
+    console.log(newGroupId);
+    res.status(201).json({ newGroupId });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.post('/:groupId/join-request', async (req, res, next) => {
   try {
     const token = req.headers.authtoken;
