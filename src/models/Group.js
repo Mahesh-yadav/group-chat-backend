@@ -1,5 +1,7 @@
 import { v4 as uuid } from 'uuid';
 import { db } from '../db/connection';
+import Message from './Message';
+import Request from './Request';
 import User from './User';
 
 export default class Group {
@@ -56,5 +58,39 @@ export default class Group {
     });
 
     return newGroupId;
+  }
+
+  static async getGroup(groupId) {
+    const database = db.getDb();
+    const group = await database
+      .collection(Group.collectionName)
+      .findOne({ id: groupId });
+
+    const owner = await User.getUserById(group.ownerId);
+
+    return {
+      ...group,
+      owner,
+    };
+  }
+
+  static async getOwnerPopulatedGroup(groupId) {
+    const group = await Group.getMemberPopulatedGroup(groupId);
+    const requests = await Request.getRequestsByGroupId(groupId);
+
+    return {
+      ...group,
+      requests,
+    };
+  }
+
+  static async getMemberPopulatedGroup(groupId) {
+    const group = await Group.getGroup(groupId);
+    const messages = await Message.getMessageByGroupId(groupId);
+
+    return {
+      ...group,
+      messages,
+    };
   }
 }
